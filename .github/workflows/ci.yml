@@ -1,0 +1,46 @@
+name: PolarisRelay CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    name: Test Go ${{ matrix.go-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go-version: ['1.22', '1.23']
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache: true
+
+      - name: Verify dependencies
+        run: go mod verify
+
+      - name: Code formatting and vet check
+        run: |
+          go vet ./...
+
+      - name: Run unit & integration test suite
+        run: go test -v ./...
+
+      - name: Run block-building benchmarks
+        run: go test -bench=. -run=^$ ./pkg/builder
+
+      - name: Build polaris CLI binary
+        run: go build -v -o bin/polaris ./cmd/polaris
+
+      - name: Run polaris demo simulation
+        run: go run cmd/polaris/main.go demo
