@@ -24,20 +24,18 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go-version }}
-          cache: true
 
       - name: Verify dependencies
         run: go mod verify
 
       - name: Code formatting and vet check
-        run: |
-          go vet ./...
+        run: go vet ./...
 
       - name: Run unit & integration test suite
         run: go test -v ./...
 
       - name: Run block-building benchmarks
-        run: go test -bench=. -run=^$ ./pkg/builder
+        run: go test -bench BenchmarkBlockPacking -run none ./pkg/builder
 
       - name: Build polaris CLI binary
         run: go build -v -o bin/polaris ./cmd/polaris
